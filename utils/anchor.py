@@ -17,8 +17,13 @@ def generate_default_boxes(config):
                        with format (cx, cy, w, h)
     """
     default_boxes = []
-    print(dir(config))
-    param = config.SSD
+    if config.arch == 'ssd300':
+        param = config.SSD300
+    elif config.arch == 'sdd512':
+        param = config.SSD512
+    else:
+        raise ValueError("wrong arch name in your config/train_config.py")
+    param = config.SSD300
     scales = param['scales']
     fm_sizes = param['fm_sizes']
     ratios = param['ratios']

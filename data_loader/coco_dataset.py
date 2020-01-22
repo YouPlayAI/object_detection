@@ -10,7 +10,8 @@ from config import coco_config
 config = coco_config.Config()
 sys.path.append(config.coco_api)
 from pycocotools.coco import COCO
-import anchor
+from utils import anchor, box_utils
+from functools import partial
 
 def set_id_to_label(label_set):
     id_to_label = {}
@@ -19,12 +20,12 @@ def set_id_to_label(label_set):
     return id_to_label
 
 class Dataset():
-    def __init__(self):
+    def __init__(self, arch):
         self.dataset_name = 'SED-dataset'
         self.image_dir = config.image_dir
         self.dataset_dir = config.dataset_dir
         self.id_to_label = set_id_to_label(config.label_set)
-        self.input_shape = config.input_shape
+        self.input_shape = (config.SSD300['image_size'], config.SSD300['image_size'])
         self.default_boxes = anchor.generate_default_boxes(config)
 
         self.train_annotation_path = os.path.join(self.dataset_dir, 'annotations', 'CNSI-SED-TRAIN.json')
@@ -37,7 +38,9 @@ class Dataset():
     def _get_image(self, image_id, coco):
         filename = coco.loadImgs(image_id)[0]['file_name']
         image_path = os.path.join(self.image_dir, filename)
-        image = cv2.imread(image_path)[:,:,::_1]
+        image = cv2.imread(image_path)[:,:,::-1]
+        image = cv2.resize(image, self.input_shape)
+        image = (image / 127.0) - 1.0
         return filename, image
 
     def _get_annotation(self, image_id, cat_ids, coco):
@@ -71,39 +74,35 @@ class Dataset():
         cat_ids = coco.getCatIds(self.id_to_label.values())
 
         for image_id in self.ids:
-            filename, image = _get_image(image_id)
-            boxes, labels = _get_annotation(image_id, cat_ids, coco)
-
-            image = cv2.resize(image, self.input_shape)
-            image = (image / 127.0) - 1.0
+            filename, image = self._get_image(image_id, coco)
+            boxes, labels = self._get_annotation(image_id, cat_ids, coco)          
             image = tf.constant(image, dtype=tf.float32)
-            gt_confs, gt_locs = compute_target(self.default_boxes, boxes, labels)
-
+            gt_confs, gt_locs = box_utils.compute_target(self.default_boxes, boxes, labels)
             yield filename, image, gt_confs, gt_locs
 
-    def load_tf_data_generator(self, split='train', num_examples=-1):
+    def load_data_generator(self, split='train', num_examples=-1):
         """
             num_examples : The number of examples to be used.
             It's used if you want to make model overfit a few examples
         """
         if split == 'train':
-            gen = partial(self.generate(split, num_examples))
+            gen = partial(self.generate, split, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
                 (tf.string, tf.float32, tf.int32, tf.float32)).repeat().shuffle(1000)
         elif split == 'val':
-            gen = partial(self.generate(split, num_examples))
+            gen = partial(self.generate, split, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
                 (tf.string, tf.float32, tf.int32, tf.float32))
         elif split == 'test':
-            gen = partial(self.generate(split, num_examples))
+            gen = partial(self.generate, split, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
                 (tf.string, tf.float32, tf.int32, tf.float32))
         else:
             raise ValueError("Wrong split name!")
 
-        return dataset.batch(config.batch_size)
+        return dataset.batch(64).prefetch(tf.data.experimental.AUTOTUNE)
 
 dataset = Dataset()
-x = dataset.load_tf_data_generator('train', 10)
-for i in x.take(1):
-    print(i)
+x = dataset.load_data_generator('train', 10)
+for i, j, k, l in x.take(10):
+    print(i.shape, j.shape, k.shape, l.shape)
