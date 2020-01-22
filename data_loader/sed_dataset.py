@@ -4,6 +4,7 @@ import os
 import numpy as np
 import cv2
 import sys
+from random import shuffle
 import tensorflow as tf
 from functools import partial
 
@@ -39,12 +40,15 @@ class Dataset():
     def _get_image(self, image_id, coco):
         filename = coco.loadImgs(image_id)[0]['file_name']
         image_path = os.path.join(self.image_dir, filename)
-        image = cv2.imread(image_path)[:,:,::-1]
-        if not image is None:
+        image = cv2.imread(image_path)
+        if image is None:
             filename = os.path.splitext(filename)[0] + '.JPG'
             image_path = os.path.join(self.image_dir, filename)
-            image = cv2.imread(image_path)[:,:,::-1]
+            image = cv2.imread(image_path)
+            if image is None:
+                raise FileNotFoundError("Can't not find correct filepath", filename)
             print(filename)
+        image = image[:,:,::-1]
         image = cv2.resize(image, self.input_shape)
         image = (image / 127.0) - 1.0
         return filename, image
@@ -82,6 +86,7 @@ class Dataset():
         if split == 'train':
             coco = COCO(self.train_annotation_path)
             ids = coco.getImgIds()[:num_examples]
+            shuffle(ids)
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
@@ -89,6 +94,7 @@ class Dataset():
         elif split == 'val':
             coco = COCO(self.val_annotation_path)
             ids = coco.getImgIds()[:num_examples]
+            shuffle(ids)
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
@@ -96,6 +102,7 @@ class Dataset():
         elif split == 'test':
             coco = COCO(self.eval_annotation_path)
             ids = coco.getImgIds()[:num_examples]
+            shuffle(ids)
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
@@ -103,4 +110,4 @@ class Dataset():
         else:
             raise ValueError("Wrong split name!")
 
-        return dataset.batch(64).prefetch(tf.data.experimental.AUTOTUNE), len(ids)
+        return dataset.batch(config.batch_size).prefetch(tf.data.experimental.AUTOTUNE), len(ids)

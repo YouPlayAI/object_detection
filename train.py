@@ -5,8 +5,7 @@ import time
 from tensorflow.keras.optimizers.schedules import PiecewiseConstantDecay
 
 from models import network
-from utils import anchor
-from utils import losses
+from utils import anchor, losses, session_config
 from configs import train_config
 config = train_config.Config()
 if config.dataset_name == 'SED-dataset':
@@ -40,10 +39,11 @@ def train_step(imgs, gt_confs, gt_locs, ssd, criterion, optimizer):
 
 
 if __name__ == '__main__':
+    session_config.setup_gpus(True, 0.9)
     os.makedirs(config.checkpoint_dir, exist_ok=True)
     ds_obj = dataset.Dataset()
-    batch_generator, train_length = dataset_obj.load_data_generator('train')
-    val_generator, val_length = ds_obj.load_data_generator('val')
+    batch_generator, train_length = ds_obj.load_data_generator('train', num_examples = config.num_examples)
+    val_generator, val_length = ds_obj.load_data_generator('val', num_examples = config.num_examples)
     # batch_generator, val_generator, info = create_batch_generator(
     #     args.data_dir, args.data_year, default_boxes,
     #     config['image_size'],
