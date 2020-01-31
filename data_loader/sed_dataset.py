@@ -47,7 +47,7 @@ class Dataset():
             image = cv2.imread(image_path)
             if image is None:
                 raise FileNotFoundError("Can't not find correct filepath", filename)
-            print(filename)
+            #print(filename)
         image = image[:,:,::-1]
         image = cv2.resize(image, self.input_shape)
         image = (image / 127.0) - 1.0
@@ -89,7 +89,7 @@ class Dataset():
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
-                (tf.string, tf.float32, tf.int32, tf.float32)).repeat().shuffle(1000)
+                (tf.string, tf.float32, tf.int32, tf.float32)).shuffle(1000)
         elif split == 'val':
             coco = COCO(self.val_annotation_path)
             ids = coco.getImgIds()[:num_examples]

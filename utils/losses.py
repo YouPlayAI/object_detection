@@ -82,7 +82,7 @@ class SSDLosses(object):
 
         conf_loss = conf_loss / num_pos
         loc_loss = loc_loss / num_pos
-
+        loc_loss = 0.01*loc_loss #loc_loss is too bigger than conf_loss.
         return conf_loss, loc_loss
 
 

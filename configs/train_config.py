@@ -6,7 +6,7 @@ class Config():
         self.coco_api = '/home/docker_sharing_folder/cocoapi/PythonAPI'
         self.label_set = ['head', 'helmet']
         self.input_shape = [300, 300]
-        self.num_examples = 50
+        self.num_examples = -1
         self.batch_size = 16
         self.SSD300 = {'ratios': [[2], [2, 3], [2, 3], [2, 3], [2], [2]],
                        'scales': [0.1, 0.2, 0.375, 0.55, 0.725, 0.9, 1.075],
