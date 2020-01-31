@@ -16,7 +16,7 @@ else:
 
 os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu_id
 
-NUM_CLASSES = len(config.label_set)+1
+NUM_CLASSES = len(config.label_set) + 1
 
 
 @tf.function
@@ -76,7 +76,17 @@ if __name__ == '__main__':
     val_log_dir = 'logs/val'
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
     val_summary_writer = tf.summary.create_file_writer(val_log_dir)
-
+        
+    
+    '''     
+    for _, imgs, gt_confs, gt_locs in batch_generator.take(1000):
+       #confs, locs = ssd(imgs)
+       #conf_loss, loc_loss = criterion(confs, locs, gt_confs, gt_locs)
+       loss, conf_loss, loc_loss, l2_loss = train_step(imgs, gt_confs, gt_locs, ssd, criterion, optimizer)
+       print(loss, conf_loss, loc_loss)
+    '''
+    
+    
     for epoch in range(config.num_epochs):
         avg_loss = 0.0
         avg_conf_loss = 0.0
@@ -85,12 +95,17 @@ if __name__ == '__main__':
         for i, (_, imgs, gt_confs, gt_locs) in enumerate(batch_generator):
             loss, conf_loss, loc_loss, l2_loss = train_step(
                 imgs, gt_confs, gt_locs, ssd, criterion, optimizer)
+            
+            
+            print(loss, conf_loss)
+    '''
             avg_loss = (avg_loss * i + loss.numpy()) / (i + 1)
             avg_conf_loss = (avg_conf_loss * i + conf_loss.numpy()) / (i + 1)
             avg_loc_loss = (avg_loc_loss * i + loc_loss.numpy()) / (i + 1)
             if (i + 1) % 50 == 0:
                 print('Epoch: {} Batch {} Time: {:.2}s | Loss: {:.4f} Conf: {:.4f} Loc: {:.4f}'.format(
                     epoch + 1, i + 1, time.time() - start, avg_loss, avg_conf_loss, avg_loc_loss))
+        
 
         avg_val_loss = 0.0
         avg_val_conf_loss = 0.0
@@ -117,3 +132,4 @@ if __name__ == '__main__':
         if (epoch + 1) % 10 == 0:
             ssd.save_weights(
                 os.path.join(config.checkpoint_dir, 'ssd_epoch_{}.h5'.format(epoch + 1)))
+        '''

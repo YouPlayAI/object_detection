@@ -70,6 +70,7 @@ class SSDLosses(object):
             gt_confs[tf.math.logical_or(pos_idx, neg_idx)],
             confs[tf.math.logical_or(pos_idx, neg_idx)])
 
+
         # regression loss only consist of positive examples
         loc_loss = smooth_l1_loss(
             # tf.boolean_mask(gt_locs, pos_idx),

@@ -1,12 +1,13 @@
 class Config():
     def __init__(self):
         self.dataset_name = 'SED-dataset'
-        self.image_dir = '/home/dan/1T/SED-project/sed-datasets/SHWD/VOC2028/JPEGImages'
-        self.dataset_dir = '/home/dan/1T/SED-project/sed-datasets'
-        self.coco_api = '/home/dan/1T/cocoapi/PythonAPI'
+        self.image_dir = '/home/docker_sharing_folder/sed-datasets/SHWD/VOC2028/JPEGImages'
+        self.dataset_dir = '/home/docker_sharing_folder/sed-datasets'
+        self.coco_api = '/home/docker_sharing_folder/cocoapi/PythonAPI'
         self.label_set = ['head', 'helmet']
         self.input_shape = [300, 300]
-        self.batch_size = 64
+        self.num_examples = 50
+        self.batch_size = 16
         self.SSD300 = {'ratios': [[2], [2, 3], [2, 3], [2, 3], [2], [2]],
                        'scales': [0.1, 0.2, 0.375, 0.55, 0.725, 0.9, 1.075],
                        'fm_sizes': [38, 19, 10, 5, 3, 1],
@@ -17,10 +18,10 @@ class Config():
                        'image_size': 512}
         self.arch='ssd300'
         self.neg_ratio = 3
-        self.initial_lr = 1e-3
+        self.initial_lr = 1e-4
         self.momentum = 0.9
         self.weight_decay = 5e-4
         self.num_epochs = 120
         self.checkpoint_dir = 'checkpoints'
         self.pretrained_type = 'base'
-        self.gpu_id = 0
+        self.gpu_id = "0"
