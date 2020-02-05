@@ -67,11 +67,12 @@ if __name__ == '__main__':
         boundaries=[int(steps_per_epoch * config.num_epochs * 2 / 3),
                     int(steps_per_epoch * config.num_epochs * 5 / 6)],
         values=[config.initial_lr, config.initial_lr * 0.1, config.initial_lr * 0.01])
-    
+    optimizer = tf.keras.optimizers.Adam(learning_rate=lr_fn)
+    '''
     optimizer = tf.keras.optimizers.SGD(
         learning_rate=lr_fn,
         momentum=config.momentum)
-
+    '''
     train_log_dir = 'logs/train'
     val_log_dir = 'logs/val'
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
@@ -83,12 +84,13 @@ if __name__ == '__main__':
         avg_loc_loss = 0.0
         start = time.time()
         for i, (_, imgs, gt_confs, gt_locs) in enumerate(batch_generator):
+            print(_) #print filename temporary
             loss, conf_loss, loc_loss, l2_loss = train_step(
                 imgs, gt_confs, gt_locs, ssd, criterion, optimizer)
             avg_loss = (avg_loss * i + loss.numpy()) / (i + 1)
             avg_conf_loss = (avg_conf_loss * i + conf_loss.numpy()) / (i + 1)
             avg_loc_loss = (avg_loc_loss * i + loc_loss.numpy()) / (i + 1)
-            if (i + 1) % 50 == 0:
+            if (i + 1) % 5 == 0:
                 print('Epoch: {} Batch {} Time: {:.2}s | Loss: {:.4f} Conf: {:.4f} Loc: {:.4f}'.format(
                     epoch + 1, i + 1, time.time() - start, avg_loss, avg_conf_loss, avg_loc_loss))
 
@@ -114,6 +116,6 @@ if __name__ == '__main__':
             tf.summary.scalar('conf_loss', avg_val_conf_loss, step=epoch)
             tf.summary.scalar('loc_loss', avg_val_loc_loss, step=epoch)
 
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 100 == 0:
             ssd.save_weights(
                 os.path.join(config.checkpoint_dir, 'ssd_epoch_{}.h5'.format(epoch + 1)))

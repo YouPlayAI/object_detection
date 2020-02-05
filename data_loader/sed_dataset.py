@@ -89,7 +89,7 @@ class Dataset():
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
             dataset = tf.data.Dataset.from_generator(gen,
-                (tf.string, tf.float32, tf.int32, tf.float32)).shuffle(1000)
+                (tf.string, tf.float32, tf.int32, tf.float32))
         elif split == 'val':
             coco = COCO(self.val_annotation_path)
             ids = coco.getImgIds()[:num_examples]

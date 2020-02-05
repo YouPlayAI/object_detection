@@ -21,7 +21,8 @@ class Config():
         self.initial_lr = 1e-4
         self.momentum = 0.9
         self.weight_decay = 5e-4
-        self.num_epochs = 1200
+        self.num_epochs = 120
         self.checkpoint_dir = 'checkpoints'
-        self.pretrained_type = 'base'
+        self.checkpoint_path = 'ssd_epoch_500.h5'
+        self.pretrained_type = 'latest'
         self.gpu_id = "0"
