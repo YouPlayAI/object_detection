@@ -152,7 +152,6 @@ def create_ssd(num_classes, arch, pretrained_type,
         if not os.path.isfile(checkpoint_path):
             raise ValueError(
                 'Not a valid checkpoint file: {}'.format(checkpoint_path))
-
         try:
             net.load_weights(checkpoint_path)
         except Exception as e:

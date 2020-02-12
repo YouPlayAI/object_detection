@@ -3,35 +3,29 @@ import tensorflow as tf
 import os
 import sys
 import numpy as np
-import yaml
 from tqdm import tqdm
 from PIL import Image
 
-from utils import anchor
-from utils import box_utils
+from utils import anchor, box_utils, session_config
 from utils.image_utils import ImageVisualizer
 from models import network
-from configs import train_config
-config = train_config.Config()
+from configs import test_config
+config = test_config.Config()
 if config.dataset_name == 'SED-dataset':
     from data_loader import sed_dataset as dataset
 
 os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu_id
 
-NUM_CLASSES = len(config.label_set)
-BATCH_SIZE = 1
-
+NUM_CLASSES = len(config.label_set)+1
 
 def predict(imgs, default_boxes):
     confs, locs = ssd(imgs)
-
-    confs = tf.squeeze(confs, 0)
-    locs = tf.squeeze(locs, 0)
+    #confs = tf.squeeze(confs, 0)
+    #locs = tf.squeeze(locs, 0)
 
     confs = tf.math.softmax(confs, axis=-1)
     classes = tf.math.argmax(confs, axis=-1)
     scores = tf.math.reduce_max(confs, axis=-1)
-
     boxes = box_utils.decode(default_boxes, locs)
 
     out_boxes = []
@@ -39,8 +33,7 @@ def predict(imgs, default_boxes):
     out_scores = []
 
     for c in range(1, NUM_CLASSES):
-        cls_scores = confs[:, c]
-
+        cls_scores = confs[:, :, c]
         score_idx = cls_scores > 0.6
         # cls_boxes = tf.boolean_mask(boxes, score_idx)
         # cls_scores = tf.boolean_mask(cls_scores, score_idx)
@@ -67,8 +60,9 @@ def predict(imgs, default_boxes):
 
 
 if __name__ == '__main__':
+    session_config.setup_gpus(True, 0.9)
 
-    test_generator, test_length = dataset.Dataset().load_data_generator('test')
+    test_generator, test_length = dataset.Dataset().load_data_generator('train', num_examples = config.num_examples)
 
     try:
         ssd = network.create_ssd(NUM_CLASSES, config.arch,
@@ -87,13 +81,15 @@ if __name__ == '__main__':
     for i, (filename, imgs, gt_confs, gt_locs) in enumerate(
         tqdm(test_generator, total=test_length,
              desc='Testing...', unit='images')):
+        default_boxes = anchor.generate_default_boxes(config)
         boxes, classes, scores = predict(imgs, default_boxes)
         filename = filename.numpy()[0].decode()
         original_image = Image.open(
-            os.path.join(config.image_dir, '{}.jpg'.format(filename)))
+            os.path.join(config.image_dir, '{}'.format(filename)))
         boxes *= original_image.size * 2
+
         visualizer.save_image(
-            original_image, boxes, classes, '{}.jpg'.format(filename))
+            original_image, boxes, classes, '{}'.format(filename))
 
         log_file = os.path.join('outputs/detects', '{}.txt')
 

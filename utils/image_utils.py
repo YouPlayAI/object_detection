@@ -6,7 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
-from box_utils import compute_iou
+from utils.box_utils import compute_iou
 
 
 class ImageVisualizer(object):

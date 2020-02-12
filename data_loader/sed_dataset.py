@@ -38,7 +38,9 @@ class Dataset():
         return len(self.ids)
 
     def _get_image(self, image_id, coco):
-        filename = coco.loadImgs(image_id)[0]['file_name']
+        image_info = coco.loadImgs(image_id)[0]
+        filename = image_info['file_name']
+        original_size = (int(image_info['height']), int(image_info['width']))
         image_path = os.path.join(self.image_dir, filename)
         image = cv2.imread(image_path)
         if image is None:
@@ -51,33 +53,34 @@ class Dataset():
         image = image[:,:,::-1]
         image = cv2.resize(image, self.input_shape)
         image = (image / 127.0) - 1.0
-        return filename, image
+        return filename, image, original_size
 
-    def _get_annotation(self, image_id, cat_ids, coco):
+    def _get_annotation(self, image_id, cat_ids, original_size, coco):
         ann_ids = coco.getAnnIds(imgIds=image_id, catIds=cat_ids, iscrowd=None)
         boxes = []
+        (image_height, image_width) = original_size[0], original_size[1]
         for ann_id in ann_ids:
             x, y, w, h = coco.loadAnns(ann_id)[0]['bbox']
-            xmin = x / w
-            ymin = y / h
-            xmax = (x+w)/w
-            ymax = (y+h)/h
+            xmin = x / image_width
+            ymin = y / image_height
+            xmax = (x+w)/image_width
+            ymax = (y+h)/image_height
             box = [xmin, ymin, xmax, ymax]
             boxes.append(box)
         labels = [ coco.loadAnns(ann_id)[0]['category_id'] for ann_id in ann_ids]
         return boxes, labels
+
     def generate(self, split, coco, ids, cat_ids, num_examples=-1):
         """
             num_examples : The number of examples to be used.
             It's used if you want to make model overfit a few examples
         """
         for image_id in ids:
-            filename, image = self._get_image(image_id, coco)
-            boxes, labels = self._get_annotation(image_id, cat_ids, coco)          
+            filename, image, original_size = self._get_image(image_id, coco)
+            boxes, labels = self._get_annotation(image_id, cat_ids, original_size, coco)
             image = tf.constant(image, dtype=tf.float32)
             gt_confs, gt_locs = box_utils.compute_target(self.default_boxes, boxes, labels)
             yield filename, image, gt_confs, gt_locs
-
     def load_data_generator(self, split='train', num_examples=-1):
         """
             num_examples : The number of examples to be used.
@@ -89,8 +92,13 @@ class Dataset():
             shuffle(ids)
             cat_ids = coco.getCatIds(self.id_to_label.values())
             gen = partial(self.generate, split, coco, ids, cat_ids, num_examples)
+
+            if len(ids) > 1000:
+                shuffle_buffer = 1000
+            else:
+                shuffle_buffer = len(ids)
             dataset = tf.data.Dataset.from_generator(gen,
-                (tf.string, tf.float32, tf.int32, tf.float32)).repeat().shuffle(1000)
+                (tf.string, tf.float32, tf.int32, tf.float32)).shuffle(shuffle_buffer)
         elif split == 'val':
             coco = COCO(self.val_annotation_path)
             ids = coco.getImgIds()[:num_examples]

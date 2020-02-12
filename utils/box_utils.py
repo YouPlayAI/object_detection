@@ -11,7 +11,7 @@ def compute_area(top_left, bot_right):
     """
     # top_left: N x 2
     # bot_right: N x 2
-    hw = tf.clip_by_value(bot_right - top_left, 0.0, 512.0)
+    hw = tf.clip_by_value(bot_right - top_left, 0.0, 1.0)
     area = hw[..., 0] * hw[..., 1]
 
     return area
