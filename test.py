@@ -62,7 +62,7 @@ def predict(imgs, default_boxes):
 if __name__ == '__main__':
     session_config.setup_gpus(True, 0.9)
 
-    test_generator, test_length = dataset.Dataset().load_data_generator('train', num_examples = config.num_examples)
+    test_generator, test_length = dataset.Dataset().load_data_generator('test', num_examples = config.num_examples)
 
     try:
         ssd = network.create_ssd(NUM_CLASSES, config.arch,
