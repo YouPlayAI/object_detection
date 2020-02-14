@@ -22,6 +22,7 @@ def predict(imgs, default_boxes):
     confs, locs = ssd(imgs)
     #confs = tf.squeeze(confs, 0)
     #locs = tf.squeeze(locs, 0)
+    #locs = tf.zeros(locs.shape, tf.float32)
 
     confs = tf.math.softmax(confs, axis=-1)
     classes = tf.math.argmax(confs, axis=-1)
@@ -62,7 +63,7 @@ def predict(imgs, default_boxes):
 if __name__ == '__main__':
     session_config.setup_gpus(True, 0.9)
 
-    test_generator, test_length = dataset.Dataset().load_data_generator('test', num_examples = config.num_examples)
+    test_generator, test_length = dataset.Dataset().load_data_generator('train', config.batch_size, num_examples = config.num_examples)
 
     try:
         ssd = network.create_ssd(NUM_CLASSES, config.arch,
@@ -78,21 +79,17 @@ if __name__ == '__main__':
     os.makedirs('outputs/detects', exist_ok=True)
     visualizer = ImageVisualizer(config.label_set, save_dir='outputs/images')
 
-    for i, (filename, imgs, gt_confs, gt_locs) in enumerate(
-        tqdm(test_generator, total=test_length,
-             desc='Testing...', unit='images')):
+    for i, (filename, imgs, gt_confs, gt_locs) in enumerate(test_generator):
         default_boxes = anchor.generate_default_boxes(config)
         boxes, classes, scores = predict(imgs, default_boxes)
         filename = filename.numpy()[0].decode()
         original_image = Image.open(
-            os.path.join(config.image_dir, '{}'.format(filename)))
+                os.path.join(config.image_dir, '{}'.format(filename)))
         boxes *= original_image.size * 2
-
         visualizer.save_image(
-            original_image, boxes, classes, '{}'.format(filename))
+                original_image, boxes, classes, '{}'.format(filename))
 
         log_file = os.path.join('outputs/detects', '{}.txt')
-
         for cls, box, score in zip(classes, boxes, scores):
             cls_name = config.label_set[cls - 1]
             with open(log_file.format(cls_name), 'a') as f:

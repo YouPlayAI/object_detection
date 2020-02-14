@@ -1,9 +1,9 @@
 class Config():
     def __init__(self):
         self.dataset_name = 'SED-dataset'
-        self.image_dir = '/home/dan/prj/datasets/sed-datasets/SHWD/VOC2028/JPEGImages'
-        self.dataset_dir = '/home/dan/prj/datasets/sed-datasets'
-        self.coco_api = '/home/dan/prj/cocoapi/PythonAPI'
+        self.image_dir = '/home/docker_sharing_folder/sed-datasets/SHWD/VOC2028/JPEGImages'
+        self.dataset_dir = '/home/docker_sharing_folder/sed-datasets'
+        self.coco_api = '/home/docker_sharing_folder/cocoapi/PythonAPI'
         self.label_set = ['head', 'helmet']
         self.input_shape = [300, 300]
         self.num_examples = -1
@@ -21,7 +21,7 @@ class Config():
         self.initial_lr = 1e-3
         self.momentum = 0.9
         self.weight_decay = 5e-4
-        self.num_epochs = 1200
+        self.num_epochs = 300
         self.checkpoint_dir = 'checkpoints'
         self.pretrained_type = 'base'
         self.gpu_id = "0"

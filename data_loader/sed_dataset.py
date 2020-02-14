@@ -81,7 +81,7 @@ class Dataset():
             image = tf.constant(image, dtype=tf.float32)
             gt_confs, gt_locs = box_utils.compute_target(self.default_boxes, boxes, labels)
             yield filename, image, gt_confs, gt_locs
-    def load_data_generator(self, split='train', num_examples=-1):
+    def load_data_generator(self, split, batch_size, num_examples=-1):
         """
             num_examples : The number of examples to be used.
             It's used if you want to make model overfit a few examples
@@ -118,4 +118,4 @@ class Dataset():
         else:
             raise ValueError("Wrong split name!")
 
-        return dataset.batch(config.batch_size).prefetch(tf.data.experimental.AUTOTUNE), len(ids)
+        return dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE), len(ids)

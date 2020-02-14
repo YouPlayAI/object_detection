@@ -39,8 +39,8 @@ if __name__ == '__main__':
     session_config.setup_gpus(True, 0.9)
     os.makedirs(config.checkpoint_dir, exist_ok=True)
     ds_obj = dataset.Dataset()
-    batch_generator, train_length = ds_obj.load_data_generator('train', num_examples = config.num_examples)
-    val_generator, val_length = ds_obj.load_data_generator('val', num_examples = config.num_examples)
+    batch_generator, train_length = ds_obj.load_data_generator('train', config.batch_size, num_examples = config.num_examples)
+    val_generator, val_length = ds_obj.load_data_generator('val', config.batch_size, num_examples = config.num_examples)
     # batch_generator, val_generator, info = create_batch_generator(
     #     args.data_dir, args.data_year, default_boxes,
     #     config['image_size'],
@@ -71,9 +71,9 @@ if __name__ == '__main__':
         momentum=config.momentum)
     '''
     train_log_dir = 'logs/train'
-    val_log_dir = 'logs/val'
+    #val_log_dir = 'logs/val'
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-    val_summary_writer = tf.summary.create_file_writer(val_log_dir)
+    #val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
     for epoch in range(config.num_epochs):
         avg_loss = 0.0
@@ -106,12 +106,10 @@ if __name__ == '__main__':
             tf.summary.scalar('loss', avg_loss, step=epoch)
             tf.summary.scalar('conf_loss', avg_conf_loss, step=epoch)
             tf.summary.scalar('loc_loss', avg_loc_loss, step=epoch)
+            tf.summary.scalar('val_loss', avg_val_loss, step=epoch)
+            tf.summary.scalar('val_conf_loss', avg_val_conf_loss, step=epoch)
+            tf.summary.scalar('val_loc_loss', avg_val_loc_loss, step=epoch)
 
-        with val_summary_writer.as_default():
-            tf.summary.scalar('loss', avg_val_loss, step=epoch)
-            tf.summary.scalar('conf_loss', avg_val_conf_loss, step=epoch)
-            tf.summary.scalar('loc_loss', avg_val_loc_loss, step=epoch)
-
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 10 == 0:
             ssd.save_weights(
                 os.path.join(config.checkpoint_dir, 'ssd_epoch_{}.h5'.format(epoch + 1)))
