@@ -1,7 +1,7 @@
 /cocoapi
 /datasets
 /model
-/log
+/logs
 /checkpoints
 /checkpoints_backup
 /outputs
