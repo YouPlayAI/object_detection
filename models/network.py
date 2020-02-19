@@ -149,6 +149,7 @@ def create_ssd(num_classes, arch, pretrained_type,
             print(e)
             raise ValueError('Please check if checkpoint_dir is specified')
     elif pretrained_type == 'specified':
+        checkpoint_path = os.path.join(checkpoint_dir, checkpoint_path)
         if not os.path.isfile(checkpoint_path):
             raise ValueError(
                 'Not a valid checkpoint file: {}'.format(checkpoint_path))
